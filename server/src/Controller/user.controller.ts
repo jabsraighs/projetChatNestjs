@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from '../Service/user.service';
 import { User } from '../Model/user.model';
-import { CreateUserDto, UpdateUserDto } from '../Model/Dto/user.dto';
+import { CreateUserDto, UpdateUserDto } from '../Model/Dto/User.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Controller('users')

@@ -19,13 +19,11 @@ export class UserService {
   }): Promise<User> {
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
-      
       const newUser = this.userRepository.create({
         name: userData.name,
         email: userData.email,
         password: hashedPassword,
       });
-      
       return await this.userRepository.save(newUser);
     } catch (error) {
       console.error('Create User Error:', error);
