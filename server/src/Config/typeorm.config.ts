@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
   username: POSTGRES_USERNAME,
   password: POSTGRES_PASSWORD,
   database: POSTGRES_DATABASE,
-  entities: [join(__dirname, 'src', 'Model', 'Sql', '*.sql.{ts,js}')],
+  entities: [join(__dirname, '..','src', 'Model', 'Sql', '*.sql.{ts,js}')],
   synchronize: true,
   migrationsRun: true,
   logging: true,
@@ -32,7 +33,7 @@ const config: TypeOrmModuleOptions = {
   username: POSTGRES_USERNAME,
   password: POSTGRES_PASSWORD,
   database: POSTGRES_DATABASE,
-  entities: [join(__dirname, '..', 'Model', '*.model.{ts,js}')],
+  entities: [join(__dirname, '..','src', 'Model', 'Sql', '*.sql.{ts,js}')],
   synchronize: true,
   migrationsRun: true,
   logging: true,

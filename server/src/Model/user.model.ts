@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+/* eslint-disable prettier/prettier */
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Message } from './message.model';
 
 @Entity('user')
 export class User {
@@ -13,4 +15,10 @@ export class User {
 
   @Column({ type: 'varchar', nullable: false })
   password: string;
+
+  @OneToMany(() => Message, message => message.sender)
+  sentMessages: Message[];
+
+  @OneToMany(() => Message, message => message.receiver)
+  receivedMessages: Message[];
 }

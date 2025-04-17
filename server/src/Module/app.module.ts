@@ -2,9 +2,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { UserModule } from './user.module';
 import DataSource from '../Config/typeorm.config';
-// import { AuthModule } from './auth.module';
+import { UserModule } from './user.module';
+import { MessageModule } from './message.module';
+import { AuthModule } from './auth.module';
 
 @Module({
   imports: [
@@ -14,10 +15,11 @@ import DataSource from '../Config/typeorm.config';
     TypeOrmModule.forRoot({
       ...DataSource,
       name: 'default',
-      autoLoadEntities: true
+      autoLoadEntities: true,
     }),
     UserModule,
-    // AuthModule
+    MessageModule, 
+    AuthModule
   ],
 })
 export class AppModule {}
