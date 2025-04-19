@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
@@ -8,9 +7,7 @@ export default defineConfig(async () => {
   const postcssConfig = await import('./postcss.config.ts');
 
   return {
-    plugins: [
-      react()
-    ],
+    plugins: [react()],
     css: {
       postcss: postcssConfig.default,
     },

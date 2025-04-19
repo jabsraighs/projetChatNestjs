@@ -2,7 +2,11 @@
   "dependencies": {
     "@nestjs/swagger": "^11.1.2",
     "@tailwindcss/vite": "^4.1.4",
-    "path": "^0.12.7",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
     "tailwindcss": "^4.1.4"
   }
 }

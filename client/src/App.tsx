@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +11,6 @@ import ChatPage from "./pages/ChatPage";
 
 const queryClient = new QueryClient();
 
-// Composant qui redirige selon l'état d'authentification
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   
@@ -27,7 +25,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   
   if (isAuthenticated) {
-    return <Navigate to="/chat" replace />;
+    return <Navigate to="/chat" replace />; 
   }
   
   return <>{children}</>;

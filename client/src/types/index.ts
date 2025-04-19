@@ -1,4 +1,6 @@
 
+// Types pour l'application de chat
+
 export interface User {
     id: string;
     username: string;
