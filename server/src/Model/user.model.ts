@@ -16,9 +16,12 @@ export class User {
   @Column({ type: 'varchar', nullable: false })
   password: string;
 
-  @OneToMany(() => Message, message => message.sender)
+  @Column({ type: 'varchar', length: 7, default: '#000000' })
+  color: string;
+
+  @OneToMany(() => Message, (message) => message.sender)
   sentMessages: Message[];
 
-  @OneToMany(() => Message, message => message.receiver)
+  @OneToMany(() => Message, (message) => message.receiver)
   receivedMessages: Message[];
 }
