@@ -45,10 +45,10 @@ export const AuthRegister = () => {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">
-          { 'Connexion'  }
+          { 'Inscription'  }
         </CardTitle>
         <CardDescription className="text-center">
-          { 'Connectez-vous pour accéder au chat' }
+          { 'Créez un compte pour rejoindre le chat' }
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

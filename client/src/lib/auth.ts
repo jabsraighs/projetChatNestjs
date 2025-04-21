@@ -1,42 +1,36 @@
 import { API_URL } from './socket';
 import { AuthResponse, User } from '../types';
 
-// Sauvegarde du token dans le localStorage
 export const setToken = (token: string): void => {
-  localStorage.setItem('chat_token', token);
+  localStorage.setItem('access_token', token);
 };
 
-// Récupération du token depuis le localStorage
 export const getToken = (): string | null => {
-  return localStorage.getItem('chat_token');
+  return localStorage.getItem('access_token');
 };
 
-// Sauvegarde des informations utilisateur dans le localStorage
 export const setUser = (user: User): void => {
   localStorage.setItem('chat_user', JSON.stringify(user));
 };
 
-// Récupération des informations utilisateur depuis le localStorage
 export const getUser = (): User | null => {
-  const user = localStorage.getItem('chat_user');
+  const user = localStorage.getItem('access_token');
   return user ? JSON.parse(user) : null;
 };
 
-// Suppression des infos d'authentification (déconnexion)
 export const clearAuth = (): void => {
-  localStorage.removeItem('chat_token');
-  localStorage.removeItem('chat_user');
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('access_token');
 };
 
-// Fonction pour l'inscription
-export const register = async (username: string, password: string): Promise<AuthResponse> => {
+export const register = async (email: string, name:string, password: string): Promise<AuthResponse> => {
   try {
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(`${API_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username, password, color: '#6366f1' }) // Couleur par défaut
+      body: JSON.stringify({ email, name,password, color: '#6366f1' })
     });
     
     if (!response.ok) {
@@ -53,15 +47,14 @@ export const register = async (username: string, password: string): Promise<Auth
   }
 };
 
-// Fonction pour la connexion
-export const login = async (username: string, password: string): Promise<AuthResponse> => {
+export const login = async (email: string, password: string): Promise<AuthResponse> => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ email, password })
     });
     
     if (!response.ok) {
@@ -78,7 +71,8 @@ export const login = async (username: string, password: string): Promise<AuthRes
   }
 };
 
-// Fonction pour mettre à jour la couleur du profil
+
+
 export const updateUserColor = async (color: string): Promise<User> => {
   const token = getToken();
   

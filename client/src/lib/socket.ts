@@ -2,7 +2,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // URL de l'API backend (à ajuster selon votre configuration)
-export const API_URL = 'http://localhost:3000';
+export const API_URL = 'http://localhost:5000';
 
 let socket: Socket | null = null;
 

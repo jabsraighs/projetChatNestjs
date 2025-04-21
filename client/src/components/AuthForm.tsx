@@ -5,17 +5,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { login, register } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-
-type AuthMode = 'login' | 'register';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthForm = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<AuthMode>('login');
   const { setUserInfo } = useAuth();
   const { toast } = useToast();
-
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -23,62 +21,48 @@ export const AuthForm = () => {
     try {
       let response;
       
-      if (mode === 'login') {
-        response = await login(username, password);
+     
+        response = await login(email, password);
         toast({
           title: 'Connexion réussie',
-          description: `Bienvenue, ${username}!`,
+          description: `Bienvenue, ${email}!`,
         });
-      } else {
-        response = await register(username, password);
-        toast({
-          title: 'Inscription réussie',
-          description: `Bienvenue, ${username}!`,
-        });
-      }
-
       setUserInfo(response.user);
+      navigate("/chat")
     } catch (error) {
       console.error('Erreur:', error);
       toast({
         variant: 'destructive',
         title: 'Erreur',
-        description: mode === 'login' 
-          ? 'Erreur lors de la connexion. Vérifiez vos identifiants.' 
-          : 'Erreur lors de l\'inscription. Essayez un autre nom d\'utilisateur.',
+        description: 
+           'Erreur lors de la connexion. Vérifiez vos identifiants.' 
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleMode = () => {
-    setMode(mode === 'login' ? 'register' : 'login');
-  };
-
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">
-          {mode === 'login' ? 'Connexion' : 'Inscription'}
+        {'Connexion' }
         </CardTitle>
         <CardDescription className="text-center">
-          {mode === 'login' 
-            ? 'Connectez-vous pour accéder au chat' 
-            : 'Créez un compte pour rejoindre le chat'}
+          {   'Connectez-vous pour accéder au chat'  }
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium">
-              Nom d'utilisateur
+            <label htmlFor="email" className="text-sm font-medium">
+              email d'utilisateur
             </label>
             <Input
-              id="username"
-              placeholder="Entrez votre nom d'utilisateur"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              placeholder="Entrez votre email d'utilisateur"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -102,17 +86,17 @@ export const AuthForm = () => {
             className="w-full" 
             disabled={isLoading}
           >
-            {isLoading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'S\'inscrire'}
+            {isLoading ? 'Chargement...' : 'Se connecter'}
           </Button>
           <p className="text-sm text-center">
-            {mode === 'login' ? 'Pas encore de compte ?' : 'Déjà un compte ?'}
+            {'Pas encore de compte ?'}
             <Button 
               variant="link" 
               type="button" 
-              onClick={toggleMode} 
+              onClick={()=>navigate("/register")} 
               className="p-0 ml-1 h-auto font-normal"
             >
-              {mode === 'login' ? 'S\'inscrire' : 'Se connecter'}
+              { 'S\'inscrire' }
             </Button>
           </p>
         </CardFooter>
