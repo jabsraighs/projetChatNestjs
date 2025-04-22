@@ -16,6 +16,11 @@ export class CreateUserDto {
   @ApiProperty()
   @IsString()
   @Type(() => String)
+  color: string;
+
+  @ApiProperty()
+  @IsString()
+  @Type(() => String)
   name: string;
 }
 export class FindAllUsersDto {
@@ -49,4 +54,9 @@ export class UpdateUserDto {
   @IsString()
   @Type(() => String)
   name: string;
+
+  @ApiProperty()
+  @IsString()
+  @Type(() => String)
+  color: string;
 }
