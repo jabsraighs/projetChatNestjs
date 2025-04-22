@@ -1,21 +1,41 @@
-
-// Types pour l'application de chat
-
 export interface User {
-    id: string;
-    username: string;
-    color: string;
-  }
-  
-  export interface Message {
-    id: string;
-    content: string;
-    sender: User;
-    timestamp: Date;
-  }
-  
-  export interface AuthResponse {
-    accessToken: string;
-    user: User;
-  }
-  
+  id: string;
+  name: string;
+  email: string;
+  color: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  senderId: string;
+  receiverId: string;
+  sender?: User;
+  receiver?: User;
+}
+
+export interface CreateMessageDto {
+  content: string;
+  receiverId: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+}
