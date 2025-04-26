@@ -1,6 +1,15 @@
 /* eslint-disable prettier/prettier */
-// user.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from '../Service/user.service';
 import { CreateUserDto, UpdateUserDto } from '../Model/Dto/user.dto';
 import { User } from '../Model/user.model';
@@ -27,10 +36,10 @@ export class UserController {
 
   @Patch(':id')
   update(@Param() params: UpdateUserDto, @Body() updateUserDto: UpdateUserDto) {
-  console.error('Params:', params);
-  console.error('UpdateUserDto:', updateUserDto);
-  return this.userService.update(params.id, updateUserDto);
-}
+    console.error('Params:', params);
+    console.error('UpdateUserDto:', updateUserDto);
+    return this.userService.update(params.id, updateUserDto);
+  }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

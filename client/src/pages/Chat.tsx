@@ -1,58 +1,80 @@
-import { useAuth } from "@/context/AuthContext";
-import { ChatProvider, useChat } from "@/context/ChatContext";
-import { Navigate } from "react-router-dom";
-import Header from "@/components/layout/Header";
-import UsersList from "@/components/chat/UsersList";
-import ChatContainer from "@/components/chat/ChatContainer";
-import { Separator } from "@/components/ui/separator";
-
-const ChatContent = () => {
-  const { users, currentReceiver, setCurrentReceiver } = useChat();
-
-  return (
-    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-64px)] gap-4 p-4">
-      <div className="w-full md:w-64 flex flex-col border rounded-lg overflow-hidden bg-card">
-        <div className="p-3 font-medium text-sm">
-          Users
-        </div>
-        <Separator />
-        <UsersList 
-          users={users}
-          currentReceiver={currentReceiver}
-          onSelectUser={setCurrentReceiver}
-        />
-      </div>
-      
-      <div className="flex-1 flex flex-col h-full">
-        <ChatContainer />
-      </div>
-    </div>
-  );
-};
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { useChat } from '@/context/ChatContext';
+import UsersList from '@/components/chat/UsersList';
+import ChatWindow from '@/components/chat/ChatWindows';
+import UserAvatar from '@/components/chat/UserAvatar';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import ProfileSettings from '@/components/profile/ProfileSettings';
+import { ChatProvider } from '@/context/ChatContext';
+import { Separator } from '@/components/ui/separator';
 
 const Chat = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      console.log('Auth state:', { isAuthenticated, user });
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  if (!isAuthenticated || !user) {
+    console.log(isAuthenticated , user)
+    return null;
   }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
+  
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <ChatProvider>
-        <ChatContent />
-      </ChatProvider>
+    <div className="h-screen flex flex-col">
+
+      <header className="bg-primary text-primary-foreground p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold">Nest Chat Connect</h1>
+          
+          <div className="flex items-center gap-2">
+            <ProfileSettings />
+            
+            <Button variant="ghost" size="icon" onClick={logout}>
+              <LogOut size={20} />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+
+        <div className="w-full max-w-[280px] border-r">
+
+          <div className="p-4 border-b flex items-center">
+            <UserAvatar 
+              name={user.name} 
+              color={user.profileColor}
+              status="online"
+            />
+            <div className="ml-3 truncate">
+              <p className="font-medium truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
+
+          <UsersList />
+        </div>
+
+        <div className="flex-1">
+          <ChatWindow />
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Chat;
+const ChatWithProvider = () => (
+  <ChatProvider>
+    <Chat />
+  </ChatProvider>
+);
+
+export default ChatWithProvider;

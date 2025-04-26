@@ -1,95 +1,88 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useAuth } from "@/context/AuthContext";
-import { LoginCredentials } from "@/types";
-import { Link } from "react-router-dom";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { LoginRequest } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-  const { login, isLoading, error } = useAuth();
-
-  const form = useForm<LoginCredentials>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const [formData, setFormData] = useState<LoginRequest>({
+    email: '',
+    password: ''
   });
-
-  const onSubmit = async (values: LoginCredentials) => {
-    await login(values);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const success = await login(formData);
+      if (success) {
+        navigate('/chat');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl">Welcome Back</CardTitle>
-        <CardDescription>Sign in to your account to continue</CardDescription>
+        <CardTitle className="text-2xl font-bold">Login</CardTitle>
+        <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="email" 
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="your@email.com"
+              required
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password" 
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
             />
-            
-            {error && <p className="text-destructive text-sm">{error}</p>}
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </CardFooter>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full"
+            onClick={() => navigate('/register')}
+          >
+            Create Account
+          </Button>
+        </CardFooter>
+      </form>
     </Card>
   );
 };

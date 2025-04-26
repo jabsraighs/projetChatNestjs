@@ -1,5 +1,4 @@
 /* eslint-disable prettier/prettier */
-// 4. Créons le service de messagerie
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,31 +16,21 @@ export class MessageService {
   ) {}
 
   async sendMessage(senderId: string, createMessageDto: CreateMessageDto): Promise<Message> {
-    const sender = await this.usersRepository.findOne({ where: { id: senderId } });
-    const receiver = await this.usersRepository.findOne({ where: { id: createMessageDto.receiverId } });
-
-    if (!sender || !receiver) {
-      throw new NotFoundException('Utilisateur non trouvé');
-    }
-
-    const message = new Message();
-    message.content = createMessageDto.content;
-    message.sender = sender;
-    message.receiver = receiver;
-    message.senderId = senderId;
-    message.receiverId = createMessageDto.receiverId;
-
-    return this.messagesRepository.save(message);
+    return this.create({
+      content: createMessageDto.content,
+      senderId: senderId,
+      receiverId: createMessageDto.receiverId,
+    });
   }
 
   async getConversation(userId: string, otherUserId: string): Promise<Message[]> {
     return this.messagesRepository.find({
       where: [
         { senderId: userId, receiverId: otherUserId },
-        { senderId: otherUserId, receiverId: userId }
+        { senderId: otherUserId, receiverId: userId },
       ],
       order: { createdAt: 'ASC' },
-      relations: ['sender', 'receiver']
+      relations: ['sender', 'receiver'],
     });
   }
 
@@ -49,13 +38,13 @@ export class MessageService {
     return this.messagesRepository.find({
       where: { receiverId: userId },
       order: { createdAt: 'DESC' },
-      relations: ['sender']
+      relations: ['sender'],
     });
   }
 
   async markAsRead(messageId: string, userId: string): Promise<Message> {
-    const message = await this.messagesRepository.findOne({ 
-      where: { id: messageId, receiverId: userId } 
+    const message = await this.messagesRepository.findOne({
+      where: { id: messageId, receiverId: userId },
     });
 
     if (!message) {
@@ -64,5 +53,37 @@ export class MessageService {
 
     message.isRead = true;
     return this.messagesRepository.save(message);
+  }
+  async create(messageData: {
+    content: string;
+    senderId: string;
+    receiverId: string;
+  }): Promise<Message> {
+    const sender = await this.usersRepository.findOne({ where: { id: messageData.senderId } });
+    const receiver = await this.usersRepository.findOne({ where: { id: messageData.receiverId } });
+
+    if (!sender || !receiver) {
+      throw new NotFoundException('User not found');
+    }
+
+    const message = new Message();
+    message.content = messageData.content;
+    message.senderId = messageData.senderId;
+    message.receiverId = messageData.receiverId;
+    message.sender = sender;
+    message.receiver = receiver;
+    message.isRead = false;
+    return this.messagesRepository.save(message);
+  }
+
+  async getUnreadMessages(userId: string): Promise<Message[]> {
+    return this.messagesRepository.find({
+      where: {
+        receiverId: userId,
+        isRead: false,
+      },
+      order: { createdAt: 'DESC' },
+      relations: ['sender'],
+    });
   }
 }

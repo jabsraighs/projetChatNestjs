@@ -1,175 +1,209 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { User, Message, CreateMessageDto } from '@/types';
 import { useAuth } from './AuthContext';
-import api from '@/lib/api';
+import { OnlineUser, UserStatus, Message } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 
 interface ChatContextType {
-  messages: Message[];
-  users: User[];
-  currentReceiver: User | null;
-  setCurrentReceiver: (user: User | null) => void;
-  sendMessage: (message: CreateMessageDto) => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
+  socket: Socket | null;
+  onlineUsers: OnlineUser[];
+  messages: Record<string, Message[]>;
+  sendMessage: (content: string, receiverId: string) => void;
+  markAsRead: (messageId: string) => void;
+  loadConversation: (otherUserId: string) => void;
+  selectedConversation: string | null;
+  setSelectedConversation: (userId: string | null) => void;
+  isConnected: boolean;
 }
 
-const ChatContext = createContext<ChatContextType>({
-  messages: [],
-  users: [],
-  currentReceiver: null,
-  setCurrentReceiver: () => {},
-  sendMessage: async () => {},
-  isLoading: false,
-  error: null
-});
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+const SOCKET_URL = 'http://localhost:5000';
+
+export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { token, user, isAuthenticated } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentReceiver, setCurrentReceiver] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   
-  const { user, token } = useAuth();
   const { toast } = useToast();
-  
-  // Initialize socket connection
+
   useEffect(() => {
-    if (token && user) {
-      const socketInstance = io('http://localhost:5000', {
-        auth: {
-          token
-        }
-      });
-      
-      setSocket(socketInstance);
-      
-      // Clean up socket on unmount
-      return () => {
-        socketInstance.disconnect();
-      };
-    }
-  }, [token, user]);
-  
-  // Socket event listeners
-  useEffect(() => {
-    if (socket) {
-      socket.on('connect', () => {
-        console.log('Connected to socket server');
-      });
-      
-      socket.on('usersList', (updatedUsers: User[]) => {
-        setUsers(updatedUsers.filter(u => u.id !== user?.id));
-      });
-      
-      socket.on('message', (newMessage: Message) => {
-        setMessages(prevMessages => [newMessage, ...prevMessages]);
-        
-        if (newMessage.senderId !== user?.id) {
-          toast({
-            title: 'New Message',
-            description: `${newMessage.sender?.name || 'Someone'}: ${newMessage.content}`,
-          });
-        }
-      });
-      
-      socket.on('disconnect', () => {
-        console.log('Disconnected from socket server');
-      });
-      
-      socket.on('error', (err) => {
-        console.error('Socket error:', err);
-        setError('Connection error. Please try again later.');
-      });
-      
-      // Clean up listeners
-      return () => {
-        socket.off('connect');
-        socket.off('usersList');
-        socket.off('message');
-        socket.off('disconnect');
-        socket.off('error');
-      };
-    }
-  }, [socket, user, toast]);
-  
-  // Load messages when current receiver changes
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!currentReceiver) return;
-      
-      setIsLoading(true);
-      try {
-        const response = await api.get(`/messages/conversation/${currentReceiver.id}`);
-        setMessages(response.data);
-        setError(null);
-      } catch (error: any) {
-        console.error('Error fetching messages:', error);
-        setError(error.response?.data?.message || 'Failed to load messages');
-      } finally {
-        setIsLoading(false);
+    if (!isAuthenticated || !token) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
       }
-    };
-    
-    fetchMessages();
-  }, [currentReceiver]);
-  
-  // Load users on initial render
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!user) return;
-      
-      setIsLoading(true);
-      try {
-        const response = await api.get('/users');
-        setUsers(response.data.filter((u: User) => u.id !== user.id));
-        setError(null);
-      } catch (error: any) {
-        console.error('Error fetching users:', error);
-        setError(error.response?.data?.message || 'Failed to load users');
-      } finally {
-        setIsLoading(false);
+      return;
+    }
+
+    const newSocket = io(SOCKET_URL, {
+      auth: {
+        token
       }
-    };
-    
-    fetchUsers();
-  }, [user]);
-  
-  const sendMessage = async (messageData: CreateMessageDto) => {
-    if (!socket || !currentReceiver) return;
-    
-    try {
-      const response = await api.post('/messages', messageData);
-      setMessages(prevMessages => [response.data, ...prevMessages]);
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      setError(error.response?.data?.message || 'Failed to send message');
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to WebSocket server');
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from WebSocket server');
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
       toast({
-        variant: 'destructive',
-        title: 'Failed to Send',
-        description: 'Your message could not be sent. Please try again.',
+        title: "Connection Error",
+        description: "Failed to connect to chat server",
+        variant: "destructive",
       });
-    }
-  };
+      setIsConnected(false);
+    });
+
+    
+    newSocket.on('onlineUsers', (users: OnlineUser[]) => {
+      setOnlineUsers(users);
+    });
+
+    newSocket.on('userStatus', (userStatus: UserStatus) => {
+      if (userStatus.status === 'online' && userStatus.name && userStatus.color) {
+       
+        setOnlineUsers(prev => {
+          if (!prev.find(u => u.userId === userStatus.userId)) {
+            return [...prev, {
+              userId: userStatus.userId,
+              name: userStatus.name,
+              color: userStatus.color
+            }];
+          }
+          return prev;
+        });
+      } else if (userStatus.status === 'offline') {
   
+        setOnlineUsers(prev => prev.filter(u => u.userId !== userStatus.userId));
+      }
+    });
+
+    newSocket.on('newMessage', (message: Message) => {
+      setMessages(prev => {
+        const otherUserId = message.senderId === user?.id ? message.receiverId : message.senderId;
+        const conversationMessages = [...(prev[otherUserId] || [])];
+        
+
+        if (!conversationMessages.find(m => m.id === message.id)) {
+          conversationMessages.push(message);
+
+          conversationMessages.sort((a, b) => 
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        }
+        
+        return {
+          ...prev,
+          [otherUserId]: conversationMessages
+        };
+      });
+
+      if (message.senderId !== user?.id && message.senderId !== selectedConversation) {
+        toast({
+          title: `New message from ${message.sender?.name || 'Someone'}`,
+          description: message.content.length > 30 
+            ? `${message.content.substring(0, 30)}...` 
+            : message.content,
+        });
+      }
+    });
+
+    setSocket(newSocket);
+
+    newSocket.emit('getUnreadMessages', (response: any) => {
+      if (response.success && response.messages) {
+
+        const groupedMessages: Record<string, Message[]> = {};
+        
+        response.messages.forEach((msg: Message) => {
+          const otherUserId = msg.senderId === user?.id ? msg.receiverId : msg.senderId;
+          if (!groupedMessages[otherUserId]) {
+            groupedMessages[otherUserId] = [];
+          }
+          groupedMessages[otherUserId].push(msg);
+        });
+        
+        setMessages(groupedMessages);
+      }
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [isAuthenticated, token, user?.id]);
+
+  useEffect(() => {
+    if (selectedConversation && socket) {
+      loadConversation(selectedConversation);
+    }
+  }, [selectedConversation]);
+
+  const sendMessage = (content: string, receiverId: string) => {
+    if (!socket || !content.trim() || !receiverId) return;
+    
+    socket.emit('sendMessage', { content, receiverId });
+  };
+
+  const markAsRead = (messageId: string) => {
+    if (!socket || !messageId) return;
+    
+    socket.emit('markAsRead', { messageId });
+  };
+
+  const loadConversation = (otherUserId: string) => {
+    if (!socket || !otherUserId) return;
+    
+    socket.emit('getConversation', { otherUserId }, (response: any) => {
+      if (response.success && response.messages) {
+        setMessages(prev => ({
+          ...prev,
+          [otherUserId]: response.messages
+        }));
+
+        response.messages.forEach((message: Message) => {
+          if (!message.isRead && message.senderId === otherUserId) {
+            markAsRead(message.id);
+          }
+        });
+      }
+    });
+  };
+
+  const contextValue: ChatContextType = {
+    socket,
+    onlineUsers,
+    messages,
+    sendMessage,
+    markAsRead,
+    loadConversation,
+    selectedConversation,
+    setSelectedConversation,
+    isConnected
+  };
+
   return (
-    <ChatContext.Provider
-      value={{
-        messages,
-        users,
-        currentReceiver,
-        setCurrentReceiver,
-        sendMessage,
-        isLoading,
-        error
-      }}
-    >
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );
 };
 
-export const useChat = () => useContext(ChatContext);
+export const useChat = (): ChatContextType => {
+  const context = useContext(ChatContext);
+  if (context === undefined) {
+    throw new Error('useChat must be used within a ChatProvider');
+  }
+  return context;
+};

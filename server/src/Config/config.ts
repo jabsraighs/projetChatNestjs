@@ -1,4 +1,3 @@
-// config/config.ts
 import * as path from 'path';
 
 export const getEnvPath = () => {

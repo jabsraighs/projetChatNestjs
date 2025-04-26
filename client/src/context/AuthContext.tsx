@@ -1,272 +1,221 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { AuthState, LoginCredentials, RegisterCredentials, User } from '@/types';
-import api from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AuthState, LoginRequest, RegisterRequest, AuthResponse } from '../types';
 import { useToast } from '@/components/ui/use-toast';
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
-  logout: () => void;
-  updateUserColor: (color: string) => Promise<void>;
-  checkAuthStatus: () => boolean;
-}
 
-// Récupération du token séparément pour mieux déboguer
-const storedToken = localStorage.getItem('token');
-console.log('[Auth Debug] Initial token from localStorage:', storedToken ? 'exists' : 'not found');
+const API_URL = 'http://localhost:5000';
+
+interface AuthContextType extends AuthState {
+  login: (credentials: LoginRequest) => Promise<boolean>;
+  register: (userData: RegisterRequest) => Promise<boolean>;
+  logout: () => void;
+  updateProfileColor: (color: string) => Promise<boolean>;
+}
 
 const initialState: AuthState = {
   user: null,
-  token: storedToken,
-  isAuthenticated: !!storedToken, // Set to true if token exists
-  isLoading: true,
-  error: null
+  token: null,
+  isAuthenticated: false
 };
 
-console.log('[Auth Debug] Initial state:', initialState);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextType>({
-  ...initialState,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  updateUserColor: async () => {},
-  checkAuthStatus: () => false
-});
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, setState] = useState<AuthState>(initialState);
-  const navigate = useNavigate();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authState, setAuthState] = useState<AuthState>(() => {
+    const savedToken = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    
+    if (savedToken && savedUser) {
+      return {
+        token: savedToken,
+        user: JSON.parse(savedUser),
+        isAuthenticated: true
+      };
+    }
+    return initialState;
+  });
+  
   const { toast } = useToast();
 
-  // Debug log pour suivre les changements d'état d'authentification
   useEffect(() => {
-    console.log('[Auth Debug] Auth state changed:', {
-      isAuthenticated: state.isAuthenticated,
-      hasToken: !!state.token,
-      isLoading: state.isLoading,
-      hasUser: !!state.user
-    });
-  }, [state]);
+    console.log('Auth state updated:', authState);
+    if (authState.token && authState.user) {
+      console.log('Saving user to localStorage:', authState.user);
+      localStorage.setItem('token', authState.token);
+      localStorage.setItem('user', JSON.stringify(authState.user));
+    } else {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+  }, [authState]);
 
-  // Séparer l'effet de vérification du token du state.token pour éviter les boucles
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      const currentToken = localStorage.getItem('token');
-      
-      if (currentToken) {
-        console.log('[Auth Debug] Token found, validating session...');
-        try {
-          // Configure l'en-tête d'autorisation
-          api.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
-          
-          const response = await api.get('/auth/me');
-          console.log('[Auth Debug] User session validated:', response.data);
-          
-          setState(prevState => ({
-            ...prevState,
-            user: response.data,
-            token: currentToken,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null
-          }));
-        } catch (error: any) {
-          console.error('[Auth Debug] Session validation failed:', error.response?.data || error);
-          localStorage.removeItem('token');
-          delete api.defaults.headers.common['Authorization'];
-          
-          setState(prevState => ({
-            ...prevState,
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: 'Session expired. Please login again.'
-          }));
-          
-          toast({
-            variant: 'destructive',
-            title: 'Session Expired',
-            description: 'Please login again to continue.',
-          });
-        }
-      } else {
-        console.log('[Auth Debug] No token found, not authenticated');
-        setState(prevState => ({
-          ...prevState,
-          isLoading: false,
-          isAuthenticated: false
-        }));
-      }
-    };
-
-    fetchCurrentUser();
-
-  }, [toast]);
-
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginRequest): Promise<boolean> => {
     try {
-      setState(prevState => ({ ...prevState, isLoading: true, error: null }));
-      
-      const response = await api.post('/auth/login', credentials);
-      const { access_token, user } = response.data;
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
   
-      localStorage.setItem('token', access_token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-     
-      setState({
-        user,
-        token: access_token,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast({
+          title: "Login Failed",
+          description: errorData.message || "Invalid credentials",
+          variant: "destructive",
+        });
+        return false;
+      }
+  
+      const data = await response.json();
+      console.log('Login response data:', data);
+      
+      if (!data.access_token) {
+        console.error('No access token in response');
+        toast({
+          title: "Login Error",
+          description: "Authentication data missing in response",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const token = data.access_token;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      const userData = {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+        profileColor: payload.profileColor
+      };
+      
+      setAuthState({
+        user: userData,
+        token: token,
+        isAuthenticated: true
       });
-      navigate('/chat');
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: 'Login Successful',
-        description: `Welcome back, ${credentials.email}!`,
+        title: "Login Error",
+        description: "Unable to connect to the server",
+        variant: "destructive",
       });
-    } catch (error: any) {
-      console.error('[Auth Debug] Login failed:', error.response?.data || error);
-      setState(prevState => ({
-        ...prevState,
-        isLoading: false,
-        error: error.response?.data?.message || 'Failed to login'
-      }));
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.response?.data?.message || 'Failed to login',
-      });
+      return false;
     }
   };
 
-  const register = async (credentials: RegisterCredentials) => {
+  const register = async (userData: RegisterRequest): Promise<boolean> => {
     try {
-      console.log('[Auth Debug] Attempting registration:', { email: credentials.email });
-      setState(prevState => ({ ...prevState, isLoading: true, error: null }));
-      await api.post('/users', credentials);
-      
-      console.log('[Auth Debug] Registration successful');
-      setState(prevState => ({
-        ...prevState,
-        isLoading: false,
-        error: null
-      }));
-      
-      toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created. You can now login.',
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
       });
-      
-      navigate('/login');
-    } catch (error: any) {
-      console.error('[Auth Debug] Registration failed:', error.response?.data || error);
-      setState(prevState => ({
-        ...prevState,
-        isLoading: false,
-        error: error.response?.data?.message || 'Failed to register'
-      }));
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast({
+          title: "Registration Failed",
+          description: errorData.message || "Unable to register",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: error.response?.data?.message || 'Failed to register',
+        title: "Registration Successful",
+        description: "Please login with your new account",
       });
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration Error",
+        description: "Unable to connect to the server",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
   const logout = () => {
-    console.log('[Auth Debug] Logging out, removing token');
-    localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
-    
-    setState({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null
-    });
-    
-    navigate('/login');
-    toast({
-      title: 'Logged Out',
-      description: 'You have been logged out successfully.',
-    });
+    setAuthState(initialState);
   };
 
-  const updateUserColor = async (color: string) => {
+  const updateProfileColor = async (color: string): Promise<boolean> => {
+    if (!authState.token || !authState.user) {
+      return false;
+    }
+
     try {
-      console.log('[Auth Debug] Updating user color to:', color);
-      setState(prevState => ({ ...prevState, isLoading: true }));
-      
-      const response = await api.patch('/users/profile/color', { color });
-      console.log('[Auth Debug] Color update successful');
-      
-      setState(prevState => ({
-        ...prevState,
-        user: { ...prevState.user!, color },
-        isLoading: false
-      }));
+      const response = await fetch(`${API_URL}/users/profile-color`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`,
+        },
+        body: JSON.stringify({ profileColor: color }),
+      });
+
+      if (!response.ok) {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update profile color",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      setAuthState({
+        ...authState,
+        user: {
+          ...authState.user,
+          profileColor: color
+        }
+      });
       
       toast({
-        title: 'Profile Updated',
-        description: 'Your profile color has been updated.',
+        title: "Profile Updated",
+        description: "Your profile color has been updated",
       });
-    } catch (error: any) {
-      console.error('[Auth Debug] Color update failed:', error.response?.data || error);
-      setState(prevState => ({
-        ...prevState,
-        isLoading: false,
-        error: error.response?.data?.message || 'Failed to update profile color'
-      }));
-      
+      return true;
+    } catch (error) {
+      console.error('Profile update error:', error);
       toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: error.response?.data?.message || 'Failed to update profile color',
+        title: "Update Error",
+        description: "Unable to connect to the server",
+        variant: "destructive",
       });
+      return false;
     }
   };
 
-  // Fonction de vérification d'authentification
-  const checkAuthStatus = () => {
-    const isAuth = state.isAuthenticated;
-    const hasToken = !!localStorage.getItem('token');
-    const hasUser = !!state.user;
-    
-    console.log('[Auth Debug] Manual auth status check:', {
-      isAuthenticated: isAuth,
-      hasToken,
-      hasUser,
-      user: state.user?.name
-    });
-    
-    // Vérifiez si l'état est incohérent
-    if (hasToken && !isAuth) {
-      console.warn('[Auth Debug] Inconsistent state: Token exists but not authenticated!');
-    }
-    
-    return isAuth;
+  const contextValue: AuthContextType = {
+    ...authState,
+    login,
+    register,
+    logout,
+    updateProfileColor
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        login,
-        register,
-        logout,
-        updateUserColor,
-        checkAuthStatus
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
-
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

@@ -1,5 +1,5 @@
 import Header from "@/components/layout/Header";
-import ColorPicker from "@/components/profile/ColorPicker";
+import ColorPicker from "@/components/profile/ProfileSettings";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
 

@@ -14,7 +14,7 @@ import { AuthController } from '../Controller/auth.controller';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory:  (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: '1d' },
       }),

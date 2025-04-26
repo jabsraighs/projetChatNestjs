@@ -4,7 +4,6 @@ import { MessageService } from '../Service/message.service';
 import { CreateMessageDto } from '../Model/Dto/message.dto';
 import { JwtAuthGuard } from '../Auth/Guards/jwt.guard';
 
-
 interface RequestWithUser extends Request {
   user: {
     id: string;

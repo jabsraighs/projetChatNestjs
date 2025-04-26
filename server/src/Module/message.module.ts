@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Message } from '../Model/message.model';
@@ -10,6 +9,6 @@ import { MessageController } from '../Controller/message.controller';
   imports: [TypeOrmModule.forFeature([Message, User])],
   controllers: [MessageController],
   providers: [MessageService],
-  exports: [MessageService]
+  exports: [MessageService],
 })
 export class MessageModule {}

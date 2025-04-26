@@ -6,20 +6,23 @@ import DataSource from '../Config/typeorm.config';
 import { UserModule } from './user.module';
 import { MessageModule } from './message.module';
 import { AuthModule } from './auth.module';
+import { ChatModule } from './chat.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    
     TypeOrmModule.forRoot({
       ...DataSource,
       name: 'default',
       autoLoadEntities: true,
     }),
     UserModule,
-    MessageModule, 
-    AuthModule
+    MessageModule,
+    AuthModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

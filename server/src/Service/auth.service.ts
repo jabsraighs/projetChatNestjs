@@ -15,10 +15,10 @@ import { AuthPayloadDto } from 'src/Model/Dto/auth.dto';
 export class AuthService {
   constructor(
     private userService: UserService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
-  async validateUser( { email, password }: AuthPayloadDto) {
+  async validateUser({ email, password }: AuthPayloadDto) {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
@@ -35,5 +35,28 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(userWithoutPassword),
     };
+  }
+  async getUserProfile(userId: string) {
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const { password, ...result } = user;
+    return result;
+  }
+  async validateToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.userService.findOne(payload.id);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const { password, ...result } = user;
+      return result;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }

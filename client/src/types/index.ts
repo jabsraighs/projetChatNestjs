@@ -1,41 +1,67 @@
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  color: string;
+  profileColor: string;
 }
 
 export interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest extends LoginRequest {
+  name: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
 }
 
 export interface Message {
   id: string;
   content: string;
-  createdAt: string;
+  createdAt: Date | string;
   isRead: boolean;
   senderId: string;
   receiverId: string;
-  sender?: User;
-  receiver?: User;
+  sender?: {
+    id: string;
+    name: string;
+    profileColor: string;
+  };
 }
 
-export interface CreateMessageDto {
+export interface OnlineUser {
+  userId: string;
+  name: string;
+  color: string;
+}
+
+export interface UserStatus {
+  userId: string;
+  status: 'online' | 'offline';
+  name?: string;
+  color?: string;
+}
+
+export interface SendMessagePayload {
   content: string;
   receiverId: string;
 }
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
+export interface MarkAsReadPayload {
+  messageId: string;
 }
 
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
+export interface ConversationPayload {
+  otherUserId: string;
 }

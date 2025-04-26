@@ -7,7 +7,6 @@ export class CreateMessageDto {
   @IsNotEmpty()
   content: string;
 
-  
   @ApiProperty()
   @IsUUID()
   @IsNotEmpty()
