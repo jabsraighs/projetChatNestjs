@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+
 import {
   Controller,
   Get,
@@ -35,12 +36,11 @@ export class UserController {
   }
 
   @Patch(':id')
-  update(@Param() params: UpdateUserDto, @Body() updateUserDto: UpdateUserDto) {
-    console.error('Params:', params);
-    console.error('UpdateUserDto:', updateUserDto);
-    return this.userService.update(params.id, updateUserDto);
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(String(id), updateUserDto);
   }
 
+  
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<void> {

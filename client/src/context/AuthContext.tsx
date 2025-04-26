@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (userData: RegisterRequest): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,9 +153,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!authState.token || !authState.user) {
       return false;
     }
-
+    
     try {
-      const response = await fetch(`${API_URL}/users/profile-color`, {
+      const response = await fetch(`${API_URL}/users/${authState.user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

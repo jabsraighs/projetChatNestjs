@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEmail, IsNumber, IsString } from 'class-validator';
+import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -30,28 +30,27 @@ export class FindAllUsersDto {
   limit: number;
 }
 export class UpdateUserDto {
-  @ApiProperty()
-  @IsString()
-  @Type(() => String)
-  id: string;
-
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsEmail()
+  @IsOptional()
   @Type(() => String)
-  email: string;
+  email?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   @Type(() => String)
-  password: string;
+  password?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   @Type(() => String)
-  name: string;
+  name?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
+  @IsOptional()
   @Type(() => String)
-  color: string;
+  profileColor?: string;
 }
