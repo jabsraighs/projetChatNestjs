@@ -95,9 +95,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const otherUserId = message.senderId === user?.id ? message.receiverId : message.senderId;
         const conversationMessages = [...(prev[otherUserId] || [])];
         
-
+     
         if (!conversationMessages.find(m => m.id === message.id)) {
-          conversationMessages.push(message);
+
+          conversationMessages.push({
+            ...message,
+   
+            senderColor: message.senderId === user?.id 
+              ? (message.senderColor || user?.profileColor)
+              : message.senderColor
+          });
 
           conversationMessages.sort((a, b) => 
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -124,7 +131,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     newSocket.emit('getUnreadMessages', (response: any) => {
       if (response.success && response.messages) {
-
         const groupedMessages: Record<string, Message[]> = {};
         
         response.messages.forEach((msg: Message) => {
@@ -132,7 +138,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!groupedMessages[otherUserId]) {
             groupedMessages[otherUserId] = [];
           }
-          groupedMessages[otherUserId].push(msg);
+       
+          groupedMessages[otherUserId].push({
+            ...msg,
+
+            senderColor: msg.senderColor || 
+              (msg.senderId === user?.id ? user.profileColor : msg.sender?.profileColor)
+          });
         });
         
         setMessages(groupedMessages);
@@ -153,10 +165,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendMessage = (content: string, receiverId: string) => {
     if (!socket || !content.trim() || !receiverId) return;
     
+    // Important: S'assurer que la couleur est envoyée avec le message
+    const messageColor = user?.profileColor;
     socket.emit('sendMessage', { 
       content, 
       receiverId,
-      senderColor: user?.profileColor 
+      senderColor: messageColor
     });
   };
 
@@ -171,12 +185,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     socket.emit('getConversation', { otherUserId }, (response: any) => {
       if (response.success && response.messages) {
-        setMessages(prev => ({
-          ...prev,
-          [otherUserId]: response.messages
+        // Traiter les messages pour préserver les couleurs d'origine
+        const processedMessages = response.messages.map((msg: Message) => ({
+          ...msg,
+          // Ne pas remplacer senderColor s'il existe déjà
+          senderColor: msg.senderColor || 
+            (msg.senderId === user?.id ? user.profileColor : msg.sender?.profileColor)
         }));
 
-        response.messages.forEach((message: Message) => {
+        setMessages(prev => ({
+          ...prev,
+          [otherUserId]: processedMessages
+        }));
+
+        processedMessages.forEach((message: Message) => {
           if (!message.isRead && message.senderId === otherUserId) {
             markAsRead(message.id);
           }

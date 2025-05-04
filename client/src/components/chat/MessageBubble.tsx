@@ -11,9 +11,10 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, isSentByCurrentUser }: MessageBubbleProps) => {
   const formattedTime = format(new Date(message.createdAt), 'HH:mm');
   
-  const messageColor = isSentByCurrentUser 
-    ? message.senderColor 
-    : message.sender?.profileColor;
+  const messageColor = message.senderColor || 
+    (isSentByCurrentUser 
+      ? message.sender?.profileColor
+      : message.sender?.profileColor);
   
   return (
     <div className={cn(
