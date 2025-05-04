@@ -153,7 +153,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendMessage = (content: string, receiverId: string) => {
     if (!socket || !content.trim() || !receiverId) return;
     
-    socket.emit('sendMessage', { content, receiverId });
+    socket.emit('sendMessage', { 
+      content, 
+      receiverId,
+      senderColor: user?.profileColor 
+    });
   };
 
   const markAsRead = (messageId: string) => {

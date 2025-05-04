@@ -11,4 +11,9 @@ export class CreateMessageDto {
   @IsUUID()
   @IsNotEmpty()
   receiverId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  senderColor: string;
+  // Remove static property as it's causing confusion
 }

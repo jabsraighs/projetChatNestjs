@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -113,7 +114,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { content: string; receiverId: string },
+    @MessageBody() payload: { content: string; receiverId: string; senderColor: string },
   ) {
     try {
       const token = client.handshake.auth.token;
@@ -122,11 +123,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!sender) {
         return { error: 'Unauthorized' };
       }
+      
+      // If senderColor is not provided in the payload, use the user's profileColor
+      const senderColor = payload.senderColor || sender.profileColor;
+      
       const message = await this.messageService.create({
         content: payload.content,
         senderId: sender.id,
         receiverId: payload.receiverId,
+        senderColor: senderColor
       });
+      
       const messageWithUserInfo = {
         ...message,
         sender: {
@@ -135,6 +142,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           profileColor: sender.profileColor,
         },
       };
+      
       if (this.connectedUsers.has(payload.receiverId)) {
         this.server.to(`user_${payload.receiverId}`).emit('newMessage', messageWithUserInfo);
       }

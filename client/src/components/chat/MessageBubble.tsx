@@ -11,6 +11,12 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, isSentByCurrentUser }: MessageBubbleProps) => {
   const formattedTime = format(new Date(message.createdAt), 'HH:mm');
   
+  // Use the color that was stored with the message when it was created
+  // This ensures each message keeps its original color
+  const messageColor = isSentByCurrentUser 
+    ? message.senderColor // The color saved when this message was sent
+    : message.sender?.profileColor; // The sender's color saved with the message
+  
   return (
     <div className={cn(
       "flex items-end mb-4",
@@ -21,9 +27,9 @@ const MessageBubble = ({ message, isSentByCurrentUser }: MessageBubbleProps) => 
           "message-bubble",
           isSentByCurrentUser ? 'message-bubble-sent' : 'message-bubble-received'
         )}
-        style={!isSentByCurrentUser && message.sender?.profileColor ? {
-          backgroundColor: `${message.sender.profileColor}20`,
-          borderLeft: `4px solid ${message.sender.profileColor}`
+        style={messageColor ? {
+          backgroundColor: `${messageColor}20`,
+          borderLeft: `4px solid ${messageColor}`
         } : {}}
       >
         <div>
@@ -39,8 +45,8 @@ const MessageBubble = ({ message, isSentByCurrentUser }: MessageBubbleProps) => 
           <span className="text-xs opacity-70">{formattedTime}</span>
           
           {isSentByCurrentUser && (
-            <CheckCheck 
-              size={14} 
+            <CheckCheck
+              size={14}
               className={cn(
                 "opacity-70",
                 message.isRead ? "text-blue-400" : ""

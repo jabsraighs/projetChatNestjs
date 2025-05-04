@@ -20,6 +20,7 @@ export class MessageService {
       content: createMessageDto.content,
       senderId: senderId,
       receiverId: createMessageDto.receiverId,
+      senderColor: createMessageDto.senderColor, // Fixed: use instance property instead of static
     });
   }
 
@@ -54,10 +55,12 @@ export class MessageService {
     message.isRead = true;
     return this.messagesRepository.save(message);
   }
+  
   async create(messageData: {
     content: string;
     senderId: string;
     receiverId: string;
+    senderColor: string
   }): Promise<Message> {
     const sender = await this.usersRepository.findOne({ where: { id: messageData.senderId } });
     const receiver = await this.usersRepository.findOne({ where: { id: messageData.receiverId } });
@@ -73,6 +76,8 @@ export class MessageService {
     message.sender = sender;
     message.receiver = receiver;
     message.isRead = false;
+    message.senderColor = messageData.senderColor; // Add this line to set the senderColor
+    
     return this.messagesRepository.save(message);
   }
 

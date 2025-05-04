@@ -1,5 +1,5 @@
 {
-    "name": "portfolio-no-code",
+    "name": "chatnestjs-websocket",
     "private": true,
     "version": "0.0.0",
     "scripts": {
@@ -41,6 +41,8 @@
         "@tanstack/react-query": "^5.56.2",
         "@tanstack/react-query-devtools": "^5.72.2",
         "axios": "^1.8.3",
+        "chatnestjs-websocket": "file:",
+        "chatnestjswebsocket": "file:",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",

@@ -27,6 +27,7 @@ export interface AuthResponse {
 }
 
 export interface Message {
+  senderColor: any;
   id: string;
   content: string;
   createdAt: Date | string;

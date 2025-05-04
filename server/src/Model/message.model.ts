@@ -36,4 +36,12 @@ export class Message {
 
   @Column()
   receiverId: string;
+  
+  @Column()
+  senderColor: string;
+  
+
 }
+
+
+

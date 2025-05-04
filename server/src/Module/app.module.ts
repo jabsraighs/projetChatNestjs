@@ -7,7 +7,7 @@ import { UserModule } from './user.module';
 import { MessageModule } from './message.module';
 import { AuthModule } from './auth.module';
 import { ChatModule } from './chat.module';
-
+import { MigrationService } from '../Config/migration.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,5 +24,6 @@ import { ChatModule } from './chat.module';
     AuthModule,
     ChatModule,
   ],
+  providers: [MigrationService],
 })
 export class AppModule {}
