@@ -14,7 +14,6 @@ import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import UserAvatar from '../components/chat/UserAvatar';
 
-// Array of preset colors
 const COLORS = [
   '#3498db', // Default blue
   '#2ecc71', // Green

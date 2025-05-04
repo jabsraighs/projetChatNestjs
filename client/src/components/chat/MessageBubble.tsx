@@ -11,11 +11,9 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, isSentByCurrentUser }: MessageBubbleProps) => {
   const formattedTime = format(new Date(message.createdAt), 'HH:mm');
   
-  // Use the color that was stored with the message when it was created
-  // This ensures each message keeps its original color
   const messageColor = isSentByCurrentUser 
-    ? message.senderColor // The color saved when this message was sent
-    : message.sender?.profileColor; // The sender's color saved with the message
+    ? message.senderColor 
+    : message.sender?.profileColor;
   
   return (
     <div className={cn(

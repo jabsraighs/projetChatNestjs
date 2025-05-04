@@ -15,5 +15,5 @@ export class CreateMessageDto {
   @ApiProperty()
   @IsNotEmpty()
   senderColor: string;
-  // Remove static property as it's causing confusion
+
 }

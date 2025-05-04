@@ -20,7 +20,7 @@ export class MessageService {
       content: createMessageDto.content,
       senderId: senderId,
       receiverId: createMessageDto.receiverId,
-      senderColor: createMessageDto.senderColor, // Fixed: use instance property instead of static
+      senderColor: createMessageDto.senderColor,
     });
   }
 
@@ -76,7 +76,7 @@ export class MessageService {
     message.sender = sender;
     message.receiver = receiver;
     message.isRead = false;
-    message.senderColor = messageData.senderColor; // Add this line to set the senderColor
+    message.senderColor = messageData.senderColor; 
     
     return this.messagesRepository.save(message);
   }

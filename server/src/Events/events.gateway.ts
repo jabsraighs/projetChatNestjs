@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -123,8 +122,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!sender) {
         return { error: 'Unauthorized' };
       }
-      
-      // If senderColor is not provided in the payload, use the user's profileColor
+
       const senderColor = payload.senderColor || sender.profileColor;
       
       const message = await this.messageService.create({

@@ -16,14 +16,14 @@ import UserAvatar from '../chat/UserAvatar';
 
 
 const COLORS = [
-  '#3498db', 
+  '#3498db',
   '#2ecc71',
-  '#e74c3c', 
-  '#f39c12', 
-  '#9b59b6', 
-  '#1abc9c', 
-  '#34495e', 
-  '#7f8c8d', 
+  '#e74c3c',
+  '#f39c12',
+  '#9b59b6',
+  '#1abc9c',
+  '#34495e',
+  '#7f8c8d',
 
 ];
 
