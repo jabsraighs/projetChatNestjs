@@ -11,6 +11,7 @@ import { MigrationService } from '../Config/migration.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
+        envFilePath: '.env.local',
       isGlobal: true,
     }),
     
